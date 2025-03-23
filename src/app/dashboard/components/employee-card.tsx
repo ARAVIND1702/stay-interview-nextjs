@@ -1,6 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Envelope, Telephone } from "@mynaui/icons-react";
+import StayInterviewForm from "./interview-form";
 
 
 interface TeamMemberCardProps {
@@ -47,6 +49,7 @@ export function TeamMemberCard({ name, email, avatar, department, doj, phone }: 
           <span className="font-medium pr-2"><Telephone size="16"/></span> {phone}
         </p>
         </div>
+        <StayInterviewForm/>
         </div>
       </CardContent>
     </Card>

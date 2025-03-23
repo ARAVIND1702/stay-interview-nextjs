@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
 import { TeamMemberCard } from "./components/employee-card";
 import { DialogForm } from "./components/dialog";
+import StayInterviewForm from "./components/interview-form";
 
 export default function DashboardPage() {
   return (
