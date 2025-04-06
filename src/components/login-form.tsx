@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -25,14 +26,17 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault(); // Prevent page reload
-
+    setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/dashboard"); // Redirect on success
+      setLoading(false);
     } catch (error: unknown) {
+      setLoading(false);
       console.error("Login Error:", error);
       if (error instanceof Error) {
         // setError(error.message); // Show error message
@@ -47,7 +51,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl text-center">Stay Interview</CardTitle>
           <CardDescription>
             Enter your email below to log in to your account
           </CardDescription>
@@ -85,8 +89,27 @@ export function LoginForm({
                 />
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full bg-brandOrange">
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  "Login"
+                )}
+              </Button>
+              <div className="flex items-center w-full ">
+                <div className="flex-grow h-[1px] bg-stone-300" />
+                <span className="px-2 text-sm text-stone-500">OR</span>
+                <div className="flex-grow h-[1px] bg-stone-300" />
+              </div>
+              <Button
+                type="button"
+                className="w-full text-stone-950 bg-white hover:text-white drop-shadow-sm "
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  "SSO"
+                )}
               </Button>
             </div>
           </form>

@@ -1,52 +1,106 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import { Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { db, doc, addDoc } from "@/lib/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
+import { Loader2 } from "lucide-react";
 
-const questions = [
-  "What do you enjoy most about your job?",
-  "What motivates you to stay with the company?",
-  "What challenges do you face in your role?",
-  "Do you feel valued and recognized for your contributions?",
-  "How would you rate your work-life balance?",
-];
+interface QuestionItem {
+  question_id: number;
+  question: string;
+}
 
-export default function StayInterviewForm() {
+interface StayInterviewFormProps {
+  employeeId: string;
+  employeeName: string;
+}
+
+export default function StayInterviewForm({employeeId, employeeName} : StayInterviewFormProps) {
+  const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [ratings, setRatings] = useState(Array(questions.length).fill(0));
   const [comment, setComment] = useState(""); // State for the comment box
+  const [responses, setResponses] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if(open){
+      fetchQuestionList();
+    }
+  }, [open, employeeId]);
 
 
-  const handleRating = (index: number, value: number) => {
+  const fetchQuestionList = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "Questions"));
+      let fetchedData: QuestionItem[] = querySnapshot.docs.map((doc) => ({
+        question_id: doc.data().question_id,
+        question: doc.data().question
+      })) as QuestionItem[];
+
+      //sort the data list from firebase DB
+      fetchedData = fetchedData.sort((a, b) => a.question_id - b.question_id);
+      setQuestions(fetchedData);
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  const handleRating = (index: number, questionId: number, rating: number) => {
+    setResponses((prev) => ({
+      ...prev,
+      [questionId]: rating,
+    }));
     const newRatings = [...ratings];
-    newRatings[index] = value;
+    newRatings[index] = rating;
     setRatings(newRatings);
   };
 
-  const handleSubmit = () => {
-    console.log("Submitted Ratings:", ratings);
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      await addDoc(collection(db, "employeeFeedback"), {
+        employee: employeeId,
+        feedback: responses,
+        comment: comment,
+        timestamp: new Date().toISOString(),
+      });
+      alert("Added feedback successfully.");
+    } catch (error) {
+      alert("Failed to submit feedback.");
+    }
+    setLoading(false);
+    setOpen(false);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" className="bg-orange-500 hover:bg-slate-50 hover:text-gray-900">Stay Interview</Button>
+        <Button variant="default" className="bg-brandOrange hover:bg-gray-950 " >Stay Interview</Button>
       </DialogTrigger>
+
       <DialogContent className="max-w-[600px]">
-        <h2 className="text-xl font-bold mb-4 text-center border-b-2 ">Stay Interview Form</h2>
+        <DialogHeader>
+          <DialogTitle>{employeeName}&apos;s Stay Interview Form</DialogTitle>
+        </DialogHeader>
+        {/* <h2 className="text-xl font-bold mb-4 text-center border-b-2 ">Stay Interview Form</h2> */}
         <div className="space-y-3">
           {questions.map((question, index) => (
             <div key={index} className="p-3 flex items-center justify-between">
               {/* Question Section - 60% width */}
               <div className="w-[60%] flex gap-2">
                 <div className="text-base font-semibold">{index + 1}.</div>
-                <div className="text-base font-semibold">{question}</div>
+                <div className="text-base font-semibold">{question.question}</div>
               </div>
-
+              
               {/* Stars Section - 40% width */}
               <div className="w-[40%] flex justify-end gap-1">
+              
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
@@ -54,7 +108,7 @@ export default function StayInterviewForm() {
                     className={`cursor-pointer ${
                       ratings[index] >= star ? "fill-orange-500 text-orange-500" : "text-gray-300"
                     }`}
-                    onClick={() => handleRating(index, star)}
+                    onClick={() => handleRating(index, question.question_id, star)}
                   />
                 ))}
               </div>
@@ -76,7 +130,7 @@ export default function StayInterviewForm() {
           </div>
           <div className="flex justify-center mt-4">
         <Button className="w-20 py-6 bg-orange-500" onClick={handleSubmit}>
-          Submit
+        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Submit"}
         </Button>
         </div>
       </DialogContent>
